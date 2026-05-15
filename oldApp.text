@@ -1,0 +1,207 @@
+<template>
+  <div class="page">
+    <header>
+      <div>My Curriculum Vitae</div>
+      <div>
+        <a href="" target="_blank"> CV </a>
+      </div>
+    </header>
+
+    <section
+      v-for="(sec, i) in sections"
+      :key="i"
+      :ref="(el) => (sectionEls[i] = el)"
+      :class="sec.class"
+    >
+      <div class="outer">
+        <div class="inner">
+          <div class="bg">
+            <h2 class="section-heading">{{ sec.text }}</h2>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import gsap from 'gsap'
+import { Observer } from 'gsap/Observer'
+import { SplitText } from 'gsap/SplitText'
+
+gsap.registerPlugin(Observer, SplitText)
+
+const sections = [
+  { class: 'first', text: 'Scroll down' },
+  { class: 'second', text: 'Animated with GSAP' },
+  { class: 'third', text: 'GreenSock' },
+  { class: 'fourth', text: 'Animation platform' },
+  { class: 'fifth', text: 'Keep scrolling' },
+]
+
+const sectionEls = []
+let currentIndex = -1
+let animating = false
+
+const wrap = gsap.utils.wrap(0, sections.length)
+
+onMounted(() => {
+  const outerWrappers = sectionEls.map((el) => el.querySelector('.outer'))
+  const innerWrappers = sectionEls.map((el) => el.querySelector('.inner'))
+  const images = sectionEls.map((el) => el.querySelector('.bg'))
+  const headings = sectionEls.map((el) => el.querySelector('.section-heading'))
+
+  const splitHeadings = headings.map(
+    (h) => new SplitText(h, { type: 'chars,words,lines', linesClass: 'clip-text' }),
+  )
+
+  gsap.set(outerWrappers, { yPercent: 100 })
+  gsap.set(innerWrappers, { yPercent: -100 })
+
+  function gotoSection(index, direction) {
+    index = wrap(index)
+    animating = true
+
+    const fromTop = direction === -1
+    const dFactor = fromTop ? -1 : 1
+
+    const tl = gsap.timeline({
+      defaults: { duration: 1.25, ease: 'power1.inOut' },
+      onComplete: () => (animating = false),
+    })
+
+    if (currentIndex >= 0) {
+      gsap.set(sectionEls[currentIndex], { zIndex: 0 })
+
+      tl.to(images[currentIndex], {
+        yPercent: -15 * dFactor,
+      }).set(sectionEls[currentIndex], { autoAlpha: 0 })
+    }
+
+    gsap.set(sectionEls[index], { autoAlpha: 1, zIndex: 1 })
+
+    tl.fromTo(
+      [outerWrappers[index], innerWrappers[index]],
+      {
+        yPercent: (i) => (i ? -100 * dFactor : 100 * dFactor),
+      },
+      { yPercent: 0 },
+      0,
+    )
+      .fromTo(images[index], { yPercent: 15 * dFactor }, { yPercent: 0 }, 0)
+      .fromTo(
+        splitHeadings[index].chars,
+        { autoAlpha: 0, yPercent: 150 * dFactor },
+        {
+          autoAlpha: 1,
+          yPercent: 0,
+          duration: 1,
+          ease: 'power2',
+          stagger: { each: 0.02, from: 'random' },
+        },
+        0.2,
+      )
+
+    currentIndex = index
+  }
+
+  Observer.create({
+    type: 'wheel,touch,pointer',
+    wheelSpeed: -1,
+    onDown: () => !animating && gotoSection(currentIndex - 1, -1),
+    onUp: () => !animating && gotoSection(currentIndex + 1, 1),
+    tolerance: 10,
+    preventDefault: true,
+  })
+
+  gotoSection(0, 1)
+})
+</script>
+
+<style scoped lang="scss">
+$bg-gradient: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.1) 100%);
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.page {
+  height: 100vh;
+  overflow: hidden;
+}
+
+a {
+  color: white;
+  text-decoration: none;
+}
+
+header {
+  position: fixed;
+  width: 100%;
+  height: 7em;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 5%;
+  align-items: center;
+  letter-spacing: 0.5em;
+}
+
+section {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  visibility: hidden;
+  top: 0;
+}
+
+.outer,
+.inner {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.bg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-size: cover;
+  background-position: center;
+}
+
+h2 {
+  font-size: clamp(1rem, 6vw, 10rem);
+  text-align: center;
+  color: white;
+}
+
+/* backgrounds */
+.first .bg {
+  background-image:
+    $bg-gradient,
+    //url('https://www.freestock.com/free-photos/beautiful-picture-horse-shoe-grand-canyon-100407103');
+    url('/public/pic1.jpg');
+}
+
+.second .bg {
+  background-image: $bg-gradient, url('https://assets.codepen.io/16327/site-landscape-2.jpg');
+}
+
+.third .bg {
+  background-image: $bg-gradient, url('https://assets.codepen.io/16327/site-landscape-3.jpg');
+}
+
+.fourth .bg {
+  background-image: $bg-gradient, url('https://assets.codepen.io/16327/site-landscape-4.jpg');
+}
+
+.fifth .bg {
+  background-image: $bg-gradient, url('https://assets.codepen.io/16327/site-landscape-5.jpg');
+}
+</style>
