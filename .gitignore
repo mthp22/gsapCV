@@ -13,7 +13,7 @@ dist
 dist-ssr
 coverage
 *.local
-
+gsapCV/.vscode
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -37,3 +37,4 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+.vscode/extensions.json
